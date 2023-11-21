@@ -1,0 +1,72 @@
+1.PÄRING
+--------
+Leidke tabelite lepikult.yliopilased, lepikult.koduylesanded, 
+lepikult.oppeained abil iga tudengi keskmine “punktisaak” koduste tööde eest
+
+	SELECT y.eesnimi, y.perenimi, AVG(k.punktid) AS keskmine FROM 
+	lepikult.yliopilased y
+	INNER JOIN lepikult.koduylesanded k ON (y.id=k.yliopilase_id) 
+	GROUP BY y.eesnimi, y.perenimi;
+
+Tulemus:
+Katrin	Kask	5,92857142857142857142857142857142857143
+Salme	Saar	7,875
+Liina	Vaher	8,75
+Kairi	M„nd	7,125
+
+
+2.PÄRING
+--------
+Samade tabelite põhjal leidke, mitu tööd on oracle-aine ülesannete kohtasaadetud. 
+Grupeerige üliõpilaste kaupa.
+
+	SELECT y.eesnimi, COUNT(k.kursusekood) AS töid FROM 
+	lepikult.yliopilased y
+	INNER JOIN lepikult.koduylesanded k ON (y.id=k.yliopilase_id)
+	WHERE k.kursusekood = 'I319'
+	GROUP BY y.eesnimi;
+
+Tulemus:
+Kairi	1
+Katrin	3
+Liina	1
+Salme	2
+
+3.PÄRING
+--------
+Uurige tabeli scott.kandidaadid abil välja, millisel aastal sündinud
+meesterahvaste võõrkeele keskmine hinne on kõige kõrgem.
+
+	SELECT voorkeel, 
+	to_char(to_date(substr(id, 2, 2), 'rrrr'), 'yyyy') AS aasta FROM scott.kandidaadid 
+	WHERE mod(substr(id, 1, 1), 2) != 0
+	GROUP BY voorkeel, to_char(to_date(substr(id, 2, 2), 'rrrr'), 'yyyy')
+	HAVING AVG(voorkeel) = (SELECT MAX(voorkeel) FROM scott.kandidaadid WHERE mod(substr(id, 1, 1), 2) != 0);
+
+Tulemus:
+99	1985
+
+4.PÄRING
+--------
+Leidke tabelite lepikult.yliopilased, lepikult.koduylesanded, lepikult.oppeained
+abil iga üliõpilase kohta, millise õppeaine puhul tema tööde keskmine punktide
+arv (töö kohta) on parim.
+
+	SELECT y.eesnimi, o.nimetus , AVG(k.punktid) AS average FROM 
+
+	(SELECT yliopilase_id, MAX(punktid) AS max FROM 
+	lepikult.koduylesanded
+	GROUP BY yliopilase_id) a,
+
+	lepikult.yliopilased y
+
+	INNER JOIN lepikult.koduylesanded k ON (y.id=k.yliopilase_id)
+	INNER JOIN lepikult.oppeained o ON (k.kursusekood=o.kood)
+	GROUP BY y.eesnimi, o.nimetus, a.max, a.yliopilase_id, y.id
+	HAVING AVG(k.punktid) = a.max AND a.yliopilase_id = y.id;
+
+Tulemus:
+Katrin	Riistvaral„hedane programmeerimine	8
+Liina	Riistvaral„hedane programmeerimine	9,5
+Kairi	Oracle:  SQL ja PL/SQL	10
+Salme	Digitaalkommunikatsioon	10

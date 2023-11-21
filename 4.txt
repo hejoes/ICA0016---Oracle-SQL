@@ -1,0 +1,50 @@
+
+1.PÄRING
+--------
+Koostage tabelite lepikult.yliopilased, lepikult.koduylesanded, lepikult.oppeained abil kursuse “Oracle” kodutööde andmed:
+	
+	SELECT y.eesnimi, y.perenimi, k.kuupaev, k.too_nr, k.punktid, k.failinimi FROM lepikult.yliopilased y
+	INNER JOIN lepikult.koduylesanded k ON (y.id=k.yliopilase_id)
+	INNER JOIN lepikult.oppeained o ON (k.kursusekood=o.kood)
+	WHERE o.kood = 'I319';
+
+Tulemus:
+
+Katrin	Kask	17.06.2003	1	8	t3.txt
+Katrin	Kask	11.06.2004	2	7	t2.txt
+Katrin	Kask	13.04.2018	1	0	
+Liina	Vaher	11.06.2004	3	8	t3.txt
+Kairi	M„nd	01.06.2003	1	10	t7.txt
+Salme	Saar	11.06.2004	3	6	t2.txt
+Salme	Saar	11.07.2003	1	10	t8.txt
+
+
+2.PÄRING
+--------
+Koostada nende tudengite nimekiri, kes ei ole saatnud üheski õppeaines ainsatki kodutööd.
+	
+	SELECT y.id, y.eesnimi, y.perenimi FROM lepikult.yliopilased y
+	FULL OUTER JOIN lepikult.koduylesanded k ON (y.id=k.yliopilase_id)
+	WHERE k.yliopilase_id is NULL;
+	
+
+Tulemus:
+
+10020012	Tarmo	Kuusk
+
+3.PÄRING
+-------
+Fikseerige tabelis „sugupuu” üks nimi (näiteks nii: .... WHERE e.nimi = ‘Karin’ ....) ja leidke kõik tema lapselapsed.
+	
+	SELECT c.* FROM sugupuu a, sugupuu b, sugupuu c
+	WHERE a.nimi = 'Karin' 
+	AND (a.kood = b.isakood OR a.kood = b.emakood)
+	AND (b.kood = c.isakood OR b.kood = c.emakood);
+
+Tulemus:
+
+Tambet	9	1	4
+Anne	12	1	4
+Henrik	77	1	50
+Liis	13	2	18
+Jaanus	7	11	20

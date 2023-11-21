@@ -1,0 +1,79 @@
+1. Tehke endale (enda kasutajatunnuse all) koopiad tabelitest oppeained ja uued_oppeained.
+Kopeerimine käib nii:
+
+a. andke (kasutaja scott rollis olles) endale tabeli oppeained vaatamisõigus:
+GRANT SELECT ON oppeained to endakasutajanimi
+
+	GRANT SELECT ON oppeained TO hjoesalu;
+	GRANT SELECT ON uued_oppeained TO hjoesalu;
+
+b. tehke tabelist koopia (enda kasutajatunnuse all):
+
+
+	create table minu_oppeained as select * from scott.oppeained;
+
+c. samamoodi kopeerige tabel uued_oppeained
+
+	create table minu_uued_oppeained as select * from scott.uued_oppeained;
+
+2. Lisage tabeli oppeained koopiasse kahe uue õppeaine (sellised, mida tabelis ei leidu) andmed. Kontrollige tulemust.
+
+insert into minu_oppeained values ('ID109', 'Toomas Ants', 'Programmeerimise algkursus');
+insert into minu_oppeained values ('ID137', 'Mihkel Uut', 'Automaattestimine');
+
+Kontroll:
+Select * from minu_oppeained; 
+
+Tulemus:
+KOOD       OPPEJOUD                NIMETUS
+I319	Toomas Lepikult	Oracle:  SQL ja PL/SQL
+Id310	Vladimir Viies	Operatsioonissteemide tehnoloogia
+Iad307	Heldur Haak	Digitaalkommunikatsioon
+Id309	Peeter Marvet	Digitaalne heli- ja pildit””tlus
+ID218	Toomas Kont	Riistvaral„hedane programmeerimine
+ID109	Toomas Ants	Programmeerimise algkursus
+ID137	Mihkel Uut	Automaattestimine
+
+3. Korrigeerige tabeli uued_oppeained koopia abil tabelit minu_oppeained, kasutades käsku MERGE. Kontrollige tulemust.
+
+MERGE INTO minu_oppeained m
+USING uued_oppeained u
+ON (m.nimetus = u.nimetus)
+WHEN MATCHED THEN 
+UPDATE SET
+m.kood=u.kood,
+m.oppejoud=u.oppejoud
+WHEN NOT MATCHED THEN
+INSERT (kood, oppejoud, nimetus) VALUES (u.kood, u.oppejoud, u.nimetus);
+
+Kontroll:
+select * from minu_oppeained;
+
+Tulemus:
+KOOD.      OPPEJOUD             NIMETUS"
+I319	Toomas Lepikult	Oracle:  SQL ja PL/SQL
+Id310	Vladimir Viies	Operatsioonissteemide tehnoloogia
+Iad307	Heldur Haak	Digitaalkommunikatsioon
+Id309	Peeter Marvet	Digitaalne heli- ja pildit””tlus
+ID218	Toomas Kont	Riistvaral„hedane programmeerimine
+ID109	Toomas Ants	Programmeerimise algkursus
+ID137	Mihkel Uut	Automaattestimine
+I220	Indrek Meos	Filosoofia
+ICY022	Valdo Praust	Turbestandardid
+ICM022	Paul Leis	Tarkvara arendusmeetodid
+
+4. Annulleerige viimane samm ja kontrollige tulemust.
+Ülesannetele vastavad DML-laused ja tulemuseks saadud tabel laadige moodle-keskkonda.
+
+Rollback SQL Developer-is.
+
+Kontroll:
+select * from minu_oppeained;
+
+Tulemus:
+KOOD        OPPEJOUD           NIMETUS
+I319	Toomas Lepikult	Oracle:  SQL ja PL/SQL
+Id310	Vladimir Viies	Operatsioonissteemide tehnoloogia
+Iad307	Heldur Haak	Digitaalkommunikatsioon
+Id309	Peeter Marvet	Digitaalne heli- ja pildit””tlus
+ID218	Toomas Kont	Riistvaral„hedane programmeerimine

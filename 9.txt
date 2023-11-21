@@ -1,0 +1,88 @@
+1. Moodustage tabel tallede kohta (sünniaeg, sünnikaal, id-number,
+sugu). Kirjutage skript, mis laseb sisestada tabelisse
+(asendusmuutujate abil) andmeid sündinud tallede kohta. Iga
+looma kohta genereeritakse jada abil id-number; jäär saab paaritu
+ja utt paarisnumbri. 
+
+
+CREATE TABLE talled(
+id NUMBER primary key,
+sunniaeg DATE,
+kaal NUMBER(10),
+sugu VARCHAR(30)
+);
+
+CREATE SEQUENCE jada_paaris
+INCREMENT BY 2
+START WITH 2
+NOMAXVALUE
+NOMINVALUE
+NOCYCLE;
+
+CREATE SEQUENCE jada_paaritu
+INCREMENT BY 2
+START WITH 1
+NOMAXVALUE
+NOMINVALUE
+NOCYCLE;
+
+ACCEPT sugu PROMPT 'SUGU (M/N):';
+ACCEPT sunniaeg PROMPT 'SUNNIAEG (YYYY-MM-DD):';
+ACCEPT kaal PROMPT 'KAAL:';
+
+INSERT INTO talled (id, sunniaeg, kaal, sugu) VALUES (
+(CASE WHEN '&sugu' = 'M' THEN jada_paaritu.NEXTVAL ELSE jada_paaris.NEXTVAL END),
+DATE '&sunniaeg', &kaal, '&sugu'
+);
+
+Tulemused:
+ID	SUNNIAEG 	KAAL SUGU
+1	13.02.2023	2	M
+
+2. Moodustage vaade, mis selekteerib tabelitest lepikult.yliopilased,
+lepikult.oppeained ja lepikult.koduylesanded õppeaine „Oracle...“
+kohta saadetud kodutööde punktisummad.
+
+Scott rollist:
+GRANT SELECT ON lepikult.oppeained TO HJoesalu WITH GRANT OPTION;
+GRANT SELECT ON lepikult.koduylesanded TO HJoesalu WITH GRANT OPTION;
+GRANT SELECT ON lepikult.yliopilased TO HJoesalu WITH GRANT OPTION;
+
+CREATE VIEW punktid 
+AS SELECT CONCAT(CONCAT(y.perenimi, ', '), y.eesnimi) AS nimi, SUM(k.punktid) AS punktid
+FROM lepikult.koduylesanded k
+INNER JOIN lepikult.yliopilased y ON (k.yliopilase_id=y.id)
+INNER JOIN lepikult.oppeained o ON (k.kursusekood=o.kood)
+WHERE o.nimetus LIKE 'Oracle%'
+GROUP BY CONCAT(CONCAT(y.perenimi, ', '), y.eesnimi)
+;
+
+Tulemused:
+NIMI		PUNKTID
+Kask, Katrin	15
+Saar, Salme	16
+Vaher, Liina	8
+M„nd, Kairi	10
+
+3. Andke kasutajale scott selle vaate vaatamisõigus.
+
+GRANT SELECT ON HJoesalu.punktid TO scott;
+
+4. Leidke esimesed kaks, kes on saanud aines „Oracle...“ kõige suurema punktisumma.
+
+SELECT * FROM (
+SELECT CONCAT(CONCAT(y.perenimi, ', '), y.eesnimi) AS nimi, SUM(k.punktid) AS punktid
+FROM lepikult.koduylesanded k
+INNER JOIN lepikult.yliopilased y ON (k.yliopilase_id=y.id)
+INNER JOIN lepikult.oppeained o ON (k.kursusekood=o.kood)
+WHERE o.nimetus LIKE 'Oracle%'
+GROUP BY CONCAT(CONCAT(y.perenimi, ', '), y.eesnimi)
+ORDER BY punktid DESC
+)
+WHERE ROWNUM <= 2;
+
+Tulemused:
+NIMI		PUNKTID
+Saar, Salme	16
+Kask, Katrin	15
+

@@ -1,0 +1,129 @@
+2. Moodustage tabelite lepikult.yliopilased, lepikult.koduylesanded
+ja lepikult.oppeained abil kursuse „Oracle….” kohta tabel, kus on
+andmed kodutööde kohta – tudengite nimed, ID-koodid ja punktid
+kolme kodutöö eest (kui ühe kodutöö kohta on samalt tudengilt
+mitu saadetist, läheb kirja parim tulemus). Eraldi veerus on kolme
+töö eest saadud punktide summa. Arvestuse tingimuseks on, et
+ülesannete punktide summa peab olema vähemalt 14. Ülesande
+lahendamisel kasutage nii DDL kui ka DML-lauseid
+
+CREATE TABLE kodutood (
+id NUMBER(12) NOT NULL PRIMARY KEY,
+eesnimi VARCHAR(30) NOT NULL,
+perenimi VARCHAR(30) NOT NULL,
+ul1 NUMBER(12),
+ul2 NUMBER(12),
+ul3 NUMBER(12),
+kokku NUMBER(12),
+arvestus VARCHAR(30)
+)
+
+INSERT INTO kodutood
+SELECT s.id, s.eesnimi, s.perenimi, ul1, ul2, ul3, (ul1+ul2+ul3) AS kokku,
+(CASE WHEN (ul1+ul2+ul3) > 13 THEN 'A' ELSE 'MA' END) AS arvestus
+FROM
+(SELECT yli.id, yli.eesnimi, yli.perenimi,
+MAX(CASE WHEN koduyl.too_nr=1 THEN koduyl.punktid ELSE 0 end) AS ul1,
+MAX(CASE WHEN koduyl.too_nr=2 THEN koduyl.punktid ELSE 0 end) AS ul2,
+MAX(CASE WHEN koduyl.too_nr=3 THEN koduyl.punktid ELSE 0 end) AS ul3
+FROM lepikult.koduylesanded koduyl
+INNER JOIN lepikult.yliopilased yli ON (koduyl.yliopilase_id=yli.id)
+INNER JOIN lepikult.oppeained oa ON (koduyl.kursusekood=oa.kood)
+WHERE oa.nimetus LIKE 'Oracle%'
+GROUP BY yli.id, yli.eesnimi, yli.perenimi) s
+GROUP BY s.id, s.eesnimi, s.perenimi, ul1, ul2, ul3;
+
+SELECT * FROM kodutood;
+
+Tulemus:
+ID		EESNIMI	PERENIMI UL1   UL2	UL3   KOKKU ARVESTUS
+10020013	Liina	Vaher	0	0	8	8	MA
+10020011	Katrin	Kask	8	7	0	15	A
+10020015	Salme	Saar	10	0	6	16	A
+10020014	Kairi	M„nd	10	0	0	10	MA
+
+
+3. Moodustage kolm tabelit, mis kajastavad raamatukogu andmeid:
+ Registreerunud lugejate andmete tabel (nimed, isikukoodid,
+aadress, telefon, e-mail);
+ Raamatukogus olevate raamatute tabel (shiffer, autor(id), pealkiri,
+eksemplari hind, eksemplaride arv);
+ Laenutuste tabel (laenutaja isikukood, raamatu shiffer, laenutamise
+kuupäev, tagastamise kuupäev).
+Tabelite veerud siduge piirangutega (omal valikul). 
+Laenutuste tabel peab
+olema FOREIGN KEY piirangutega seostatud kahe ülejäänud tabeliga.
+
+CREATE TABLE lugejad(
+eesnimi VARCHAR(30),
+perenimi VARCHAR(30),
+isikukood NUMBER(12) PRIMARY KEY,
+address VARCHAR(30),
+telefon NUMBER(15),
+email VARCHAR(30)
+);
+
+CREATE TABLE raamatud(
+shiffer VARCHAR2(30) PRIMARY KEY,
+autorid VARCHAR(30),
+pealkiri VARCHAR(30),
+eksemplari_hind NUMBER(10),
+eksemplari_arv NUMBER(10)
+);
+
+
+CREATE TABLE laenud(
+id NUMBER(10) NOT NULL PRIMARY KEY,
+lugejad_isikukood NUMBER(10),
+raamat VARCHAR(30),
+
+FOREIGN KEY (lugejad_isikukood) REFERENCES lugejad(isikukood),
+FOREIGN KEY (raamat) REFERENCES raamatud(shiffer),
+
+laenu_kuupaev DATE,
+tagastamise_kuupaev DATE
+);
+
+
+INSERT INTO lugejad VALUES ('Mait', 'Viil', 100, 'Pommiauk1', 51445566, 'kirjastus1@sgmail.com');
+INSERT INTO lugejad VALUES ('Indrek', 'Ants', 101, 'Pommiauk2', 52445577, 'kirjastus2@gmail.com');
+INSERT INTO lugejad VALUES ('Erik', 'Piirmaa', 102, 'Pommiauk3', 53445588, 'kirjastus3@gmail.com');
+
+INSERT INTO raamatud VALUES ('raamat2', 'Virve Unt2', 'Aatomharjumused2', 40, 1);
+INSERT INTO raamatud VALUES ('raamat2', 'Miia Adamson', 'Investeerimispsühholoogia võhikutele', 50, 1);
+INSERT INTO raamatud VALUES ('raamat3', 'Heidi Kill', 'Arutu Õhin', 40, 1);
+
+INSERT INTO laenud VALUES (1, 100, 'raamat1', DATE '2023-10-28', null);
+INSERT INTO laenud VALUES (2, 101, 'raamat2', DATE '2023-10-28', null);
+INSERT INTO laenud VALUES (3, 102, 'raamat3', DATE '2023-10-28', DATE '2023-10-30');
+
+
+Tulemused:
+EESNIMI PERENIMI ISIKUKOOD ADDRESS	TELEFON			EMAIL
+Mait	Viil	100	Pommiauk1	51445566	kirjastus1@sgmail.com
+Indrek	Ants	101	Pommiauk2	52445577	kirjastus2@gmail.com
+Erik	Piirmaa	102	Pommiauk3	53445588	kirjastus3@gmail.com
+
+SHIFFER AUTORID		 PEALKIRI    EKSEMPLATI_HIND EKSEMPLARI_ARV
+raamat1	Virve Unt	Aatomharjumused	30		1
+raamat3	Heidi Kill	Arutu Õhin	40		1
+raamat2	Virve Unt2	Aatomharjumused2 40		1
+
+
+ID  ISIKUKOOD. RAAMAT LAENU_KUUPAEV   TAGASTAMISE_KUUPAEV
+1	100	raamat1	28.10.2023	
+2	101	raamat2	28.10.2023	
+3	102	raamat3	28.10.2023	30.10.2023
+
+4. Koostage päring, mis leiab „võlglased”. Võlaks loeme laenutatud, kuid tagastamata raamatu, kui laenutamisest on möödunud üle 2 nädala.
+Päring peab näitama võlglaste nimed ja tagastamata raamatud.
+
+SELECT lug.eesnimi, lug.perenimi, r.pealkiri
+FROM laenud l, lugejad lug, raamatud r
+WHERE lug.isikukood = l.lugejad_isikukood
+AND r.shiffer = l.raamat AND l.tagastamise_kuupaev is null AND sysdate - l.laenu_kuupaev > 14;
+
+Tulemus:
+EESNIMI PERENIMI PEALKIRI
+
+Võlglasi insert kirjete järgi pole

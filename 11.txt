@@ -1,0 +1,137 @@
+1. Kirjutage PL/SQL-programm, mis leiab tabelist
+lepikult.kandidaadid, mitu inimest on sündinud 1982. a. 1. kuus,
+1982. a. 2. kuus jne. kuni 1984.a. 12. kuus:
+--
+1982. a. 1. kuus on sündinud 13 kandidaati.
+1982. a. 2. kuus on sündinud 10 kandidaati.
+….
+1984. a. 12. kuus on sündinud 4 kandidaati
+
+Skript:
+
+SET SERVEROUTPUT ON;
+
+DECLARE
+    min_kuu CONSTANT integer := 1;
+    max_kuu CONSTANT integer := 12;
+    min_aasta CONSTANT integer := 82;
+    max_aasta CONSTANT integer := 84;
+    kuu integer;
+    aasta integer;
+    isikut integer;
+BEGIN
+    FOR aasta IN min_aasta .. max_aasta
+    LOOP
+        FOR kuu IN min_kuu .. max_kuu
+        LOOP
+            SELECT count(*) INTO isikut FROM lepikult.kandidaadid k WHERE 
+            substr(k.id, 2, 2) = aasta AND substr(k.id, 4, 2) = kuu;
+            dbms_output.put_line('19'|| aasta ||'. a ' || kuu || '.kuus on syndinud '|| isikut ||' kandidaati.');
+        END LOOP;
+    END LOOP;
+END;
+
+Tulemused:
+
+1982. a 1.kuus on syndinud 1 kandidaati.
+1982. a 2.kuus on syndinud 1 kandidaati.
+1982. a 3.kuus on syndinud 0 kandidaati.
+1982. a 4.kuus on syndinud 0 kandidaati.
+1982. a 5.kuus on syndinud 0 kandidaati.
+1982. a 6.kuus on syndinud 1 kandidaati.
+1982. a 7.kuus on syndinud 0 kandidaati.
+1982. a 8.kuus on syndinud 1 kandidaati.
+1982. a 9.kuus on syndinud 1 kandidaati.
+1982. a 10.kuus on syndinud 0 kandidaati.
+1982. a 11.kuus on syndinud 1 kandidaati.
+1982. a 12.kuus on syndinud 2 kandidaati.
+1983. a 1.kuus on syndinud 0 kandidaati.
+1983. a 2.kuus on syndinud 2 kandidaati.
+1983. a 3.kuus on syndinud 0 kandidaati.
+1983. a 4.kuus on syndinud 2 kandidaati.
+1983. a 5.kuus on syndinud 0 kandidaati.
+1983. a 6.kuus on syndinud 0 kandidaati.
+1983. a 7.kuus on syndinud 1 kandidaati.
+1983. a 8.kuus on syndinud 1 kandidaati.
+1983. a 9.kuus on syndinud 0 kandidaati.
+1983. a 10.kuus on syndinud 0 kandidaati.
+1983. a 11.kuus on syndinud 1 kandidaati.
+1983. a 12.kuus on syndinud 4 kandidaati.
+1984. a 1.kuus on syndinud 2 kandidaati.
+1984. a 2.kuus on syndinud 0 kandidaati.
+1984. a 3.kuus on syndinud 1 kandidaati.
+1984. a 4.kuus on syndinud 2 kandidaati.
+1984. a 5.kuus on syndinud 1 kandidaati.
+1984. a 6.kuus on syndinud 12 kandidaati.
+1984. a 7.kuus on syndinud 2 kandidaati.
+1984. a 8.kuus on syndinud 3 kandidaati.
+1984. a 9.kuus on syndinud 4 kandidaati.
+1984. a 10.kuus on syndinud 2 kandidaati.
+1984. a 11.kuus on syndinud 6 kandidaati.
+1984. a 12.kuus on syndinud 9 kandidaati.
+
+2. Kasutades asendusmuutujaid (accept-lausete abil), sisestage
+uue kandidaadi andmed - isikukood, ees- ja perenimi ning kolme
+eksami tulemused.
+
+Koostada progamm, mis sisestab uue kandidaadi (rea)
+tabelisse kandidaadid juhul kui
+1) sellise isikukoodiga kandidaati ei ole tabelis;
+2) sisestatud ID-kood on õige pikkusega (11 sümbolit) ja
+sisaldab ainult numbreid;
+3) Eksamitulemused on täisarvud vahemikus 0 – 100. 
+
+
+Skript:
+
+SET FEEDBACK OFF;
+SET SERVEROUTPUT ON;
+
+ACCEPT isikukood PROMPT 'Sisestage opilase isikukood:';
+ACCEPT eesnimi PROMPT 'Sisestage opilase eesnimi:';
+ACCEPT perenimi PROMPT 'Sisestage opilase perenimi:';
+
+ACCEPT mat_tul PROMPT 'Sisestage opilase matemaatika eksami tulemus:';
+ACCEPT vork_tul PROMPT 'Sisestage opilase voorkeele eksami tulemus:';
+ACCEPT emak_tul PROMPT 'Sisestage opilase emakeele eksami tulemus:';
+
+DECLARE
+    c char(1);
+    i integer;
+    id_exists number;
+BEGIN
+    SELECT count(*) INTO id_exists FROM hejoes.kandidaadid k
+    WHERE rownum = 1 AND k.id = '&isikukood';
+    
+    IF id_exists > 0 THEN 
+    dbms_output.put_line('Isikukood is already exists in the table!'); 
+    GOTO lopp;
+    END IF;
+    
+    IF LENGTH('&isikukood') != 11 THEN 
+    dbms_output.put_line('Isikukood has incorrect length!'); 
+    GOTO lopp;
+    END IF;
+    
+    FOR i IN 1 .. LENGTH('&isikukood')
+    LOOP
+        c := SUBSTR('&isikukood',i,1);
+        IF c NOT IN ('1','2','3','4','5','6','7', '8', '9', '0')
+        THEN dbms_output.put_line('Isikukood contains incorrect symbols!');
+        GOTO lopp;
+        END IF;
+    END LOOP;
+    
+    IF ('&mat_tul' < 0 OR '&mat_tul' > 100 OR '&mat_tul' IS NULL) OR ('&vork_tul' < 0 OR '&vork_tul' > 100 OR '&vork_tul' IS NULL) 
+    OR ('&emak_tul' < 0 OR '&emak_tul' > 100 OR '&emak_tul' IS NULL) THEN
+    dbms_output.put_line('Exam results are incorrect!'); 
+    GOTO lopp;
+    END IF;
+    
+    INSERT INTO hejoes.kandidaadid VALUES ('&isikukood', '&eesnimi', '&perenimi', '&mat_tul', '&vork_tul', '&emak_tul');
+    dbms_output.put_line('New student is added!');
+
+    <<lopp>>
+    null;
+END;
+

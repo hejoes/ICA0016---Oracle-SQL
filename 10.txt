@@ -1,0 +1,91 @@
+1. Looge „bind“-tüüpi arvuline muutuja. Kirjutage PL/SQL-
+programm (anonüümne blokk), mis salvestab sellesse muutujasse
+parima võõrkeeletulemuse tabelist kandidaadid. Väljapool
+programmi (sqlplus-keskkonnas) koostage päring, mis selle
+muutuja väärtust kasutades leiab iga kandidaadi kohta, palju tema
+võõrkeeletulemus parimale alla jääb.
+
+Script:
+
+SET FEEDBACK OFF;
+SET PAGESIZE 19;
+SET LINESIZE 65;
+
+COL eesnimi HEADING Eesnimi FORMAT A15;
+COL perenimi HEADING Perenimi FORMAT A15;
+
+VARIABLE parem_voorkeel NUMBER;
+
+BEGIN
+    SELECT MAX(voorkeel) INTO :parem_voorkeel FROM lepikult.kandidaadid;
+END;
+/
+
+SELECT k.eesnimi AS eesnimi, k.perenimi AS perenimi, k.voorkeel AS voorkeel, 
+(:parem_voorkeel - k.voorkeel) AS erinevus, :parem_voorkeel AS parem FROM lepikult.kandidaadid k;
+
+CLEAR COLUMN;
+SET FEEDBACK ON;
+
+Tulemus:
+Eesnimi         Perenimi          VOORKEEL   ERINEVUS      PAREM
+TARMO           VILT                    44         55         99
+MAIT            LEIGER                  53         46         99
+REIMO           KLASEN                  49         50         99
+MARIO           REBANE                  27         72         99
+PRIIT           †IGLANE                 47         52         99
+MARTIN          ENNUS                   44         55         99
+MART            J†GEVA                  35         64         99
+KUUNO           HEIN                    32         67         99
+REIGO           VASSUS                  34         65         99
+
+
+2. Kasutage tabeleid lepikult.oppeained, lepikult.koduylesanded ja
+lepikult.yliopilased. Kirjutage PL/SQL-programm, mis kasutab kaht
+asendusmuutujat - ühega määratakse õppeaine, teisega üliõpilase
+nimi. Leidke, mitu kodutööd see üliõpilane antud aine kohta on
+saatnud ja kui palju punkte ta kokku oma tööde eest on saanud.
+Arvestage seejuures, et sama tööd võib olla saadetud korduvalt
+(seejuures läheb arvesse parim tulemus). Tulemus väljastage
+protseduuri „dbms_output.put_line“ abil.
+
+Script:
+
+SET SERVEROUTPUT ON;
+SET VERIFY OFF;
+
+ACCEPT aine_prompt PROMPT 'Sisestage oppeaine nimetus:';
+ACCEPT opilane_prompt PROMPT 'Sisestage opilase nimi:';
+
+DECLARE
+	nimi VARCHAR(20);
+	arv VARCHAR(20);
+	kokku VARCHAR(20);
+BEGIN
+	SELECT CONCAT(CONCAT(s.perenimi, ', '), s.eesnimi) AS nimi, COUNT(s.id) AS arv , SUM(s.max_res) AS kokku
+	INTO nimi, arv, kokku
+	FROM
+	(SELECT yo.id, yo.eesnimi, yo.perenimi, MAX(ku.punktid) AS max_res, ku.yl_id
+	FROM 
+	lepikult.koduylesanded ku
+	INNER JOIN lepikult.yliopilased yo ON (ku.yliopilase_id=yo.id)
+	INNER JOIN lepikult.oppeained oa ON (ku.kursusekood=oa.kood)
+	WHERE oa.nimetus LIKE '%&aine_prompt%' AND yo.eesnimi LIKE '%&opilane_prompt%'
+	GROUP BY yo.id, yo.eesnimi, yo.perenimi, ku.yl_id) s
+	GROUP BY s.id, s.eesnimi, s.perenimi;
+	
+	dbms_output.put_line('Nimi: '||TO_CHAR(nimi)||' Tööd: '||TO_CHAR(arv)||' Kokku punktid: '||TO_CHAR(kokku));
+END;
+/
+
+SET SERVEROUTPUT OFF;
+SET VERIFY ON;
+
+
+Tulemus:
+
+Sisestage oppeaine nimetus:Or
+Sisestage opilase nimi:Katrin
+Nimi: Kask, Katrin Tööd: 3 Kokku punktid: 15
+
+PL/SQL procedure successfully completed.

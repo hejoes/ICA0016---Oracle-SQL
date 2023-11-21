@@ -1,0 +1,53 @@
+----
+Kasutage tabeleid lepikult.yliopilased, lepikult.koduylesanded,
+lepikult.oppeained ning koostage skript (programm), mis küsib
+kasutajalt õppeaine nimetuse fragmendi (kasutades
+asendusmuutujaid) ja väljastab selle õppeaine kohta saadetud
+kodutööd. Lehekülje päisesse kirjutage õppeaine nimetus ja
+jalusesse vastava õppejõu nimi, nagu näidatud allpool
+---
+
+ACCEPT sisestatud_aine PROMPT 'Sisestage õppeaine nimetus:';
+
+SET PAGESIZE 20;
+SET LINESIZE 60;
+SET FEEDBACK OFF;
+
+COL oppejoud NEW_VALUE oppejoud_title NOPRINT;
+COL aine NEW_VALUE aine_title NOPRINT;
+
+TTITLE CENTER '_________________________________' SKIP 2 CENTER 'Aine: ' aine_title SKIP 2;
+BTITLE CENTER 'Õppejoud: ' oppejoud_title SKIP 1 CENTER '_________________________________';
+
+COL ylesanne HEADING Ülesanne FORMAT A15;
+COL punktid HEADING Punktid FORMAT A15;
+COL kuupaev HEADING Kuupäev FORMAT A15;
+COL nimi HEADING Nimi FORMAT A15;
+
+SELECT CONCAT(CONCAT(y.perenimi, ', '), y.eesnimi) AS nimi, k.yl_id AS ylesanne, k.punktid AS punktid, 
+to_char(k.kuupaev, 'dd.mm.yyyy') AS kuupaev, 
+o.oppejoud AS oppejoud, o.nimetus AS aine FROM lepikult.koduylesanded k
+INNER JOIN lepikult.yliopilased y ON (k.yliopilase_id=y.id)
+INNER JOIN lepikult.oppeained o ON (k.kursusekood=o.kood)
+WHERE o.nimetus LIKE '&sisestatud_aine%';
+
+CLEAR COLUMN;
+SET FEEDBACK ON;
+
+
+
+Tulemus:
+                                                               
+Aine: Digitaalkommunikatsioon               
+                                                               
+                                                               
+Nimi                   Ülesanne         Punktid Kuupäev         
+--------------- --------------- --------------- ---------------    
+Kask, Katrin		     14		6,5	21.06.2003	
+Kask, Katrin		      9		5	11.06.2003
+M„nd, Kairi		     17		2,5	11.08.2003	
+M„nd, Kairi		     12		10	01.06.2003	
+Saar, Salme		     13		10	11.07.2003  
+
+
+Oppejoud: Oppe Joud                   
